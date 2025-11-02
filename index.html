@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeatherTunes - Context-Aware Music</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /*
+        The styles in styles.css will handle the full application look. 
+        These minimal inline styles ensure basic mobile and font support.
+        */
+        body { font-family: 'Poppins', sans-serif; background: #121212; color: #fff; margin: 0; padding: 0; }
+        .container { max-width: 90%; margin: 20px auto; padding: 20px; border-radius: 12px; background: #1f1f1f; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); }
+        .ai-playlist-section { background: #121212; padding: 15px; border-radius: 8px; max-height: 200px; overflow-y: auto; color: #fff; margin-bottom: 15px; }
+        .ai-playlist-section li { color: white; padding: 5px 0; border-bottom: 1px solid #282828; font-size: 0.9em; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div id="weatherStatusBarContainer" class="status-bar-container">
+                <div id="weatherStatusBar" class="weather-status-bar"></div>
+            </div>
+            <h1>🌤️ WeatherTunes</h1>
+            <p class="subtitle">Discover music that matches your weather, mood, and activity.</p>
+        </header>
+
+        <div class="auth-section">
+            <div id="authStatus" class="auth-status">
+                <button id="loginBtn" class="auth-btn login-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;">
+                        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.84-.179-.84-.66 0-.359.24-.66.54-.779 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.242 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>
+                    </svg>
+                    Login with Spotify
+                </button>
+                <div id="userInfo" class="user-info hidden">
+                    <span id="userName"></span>
+                    <button id="logoutBtn" class="auth-btn logout-btn">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="search-section">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="locationInput" 
+                    placeholder="Enter city name (e.g., London)" 
+                    class="location-input"
+                >
+                <select id="languageSelect" class="language-select">
+                    <option value="english">🇬🇧 English</option>
+                    <option value="hindi">🇮🇳 Hindi/Bollywood</option>
+                    <option value="spanish">🇪🇸 Spanish/Latin</option>
+                    <option value="french">🇫🇷 French</option>
+                    <option value="japanese">🇯🇵 Japanese</option>
+                    <option value="korean">🇰🇷 Korean (K-Pop)</option>
+                    <option value="portuguese">🇵🇹 Portuguese/Brazillian</option>
+                    <option value="german">🇩🇪 German</option>
+                    <option value="italian">🇮🇹 Italian</option>
+                    <option value="chinese">🇨🇳 Chinese</option>
+                    <option value="tamil">🇮🇳 Tamil</option>
+                    <option value="telugu">🇮🇳 Telugu</option>
+                    <option value="punjabi">🇮🇳 Punjabi</option>
+                </select>
+                <select id="activitySelect" class="activity-select">
+                    <option value="default">Default Mood</option>
+                    <option value="focus">Focus / Studying</option>
+                    <option value="workout">Workout / Running</option>
+                    <option value="party">Party / Social</option>
+                    <option value="sleep">Sleep / Unwind</option>
+                    <option value="commute">Commute / Driving</option>
+                </select>
+                <input 
+                    type="range" 
+                    id="discoveryDial" 
+                    min="0" 
+                    max="100" 
+                    value="50" 
+                    class="w-full" 
+                    style="margin-top: 10px;"
+                >
+                <span id="discoveryLabel" style="font-size: 0.9em; width: 100%; text-align: center; color: #bbb;">Discovery: Balanced</span>
+
+                <div class="action-buttons">
+                    <button id="searchBtn" class="search-btn">Get Weather & Playlist</button>
+                    <button id="openSpotifyBtn" class="spotify-btn search-btn" target="_blank">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.84-.179-.84-.66 0-.359.24-.66.54-.779 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.242 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>
+                        </svg>
+                        Search on Spotify
+                    </button>
+                </div>
+                </div>
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Loading weather and music suggestions...</p>
+        </div>
+
+        <div id="weatherCard" class="weather-card hidden">
+            <div class="weather-header">
+                <div class="location-info">
+                    <h2 id="cityName"></h2>
+                    <p id="dateTime"></p>
+                </div>
+                <div class="weather-icon-container">
+                    <img id="weatherIcon" src="" alt="Weather icon" class="weather-icon">
+                </div>
+            </div>
+            
+            <div class="weather-main">
+                <div class="temperature">
+                    <span id="temperature"></span>
+                    <span class="unit">°C</span>
+                </div>
+                <p class="weather-description" id="weatherDescription"></p>
+            </div>
+
+            <div class="weather-details">
+                <div class="detail-item">
+                    <span class="detail-label">Feels Like</span>
+                    <span class="detail-value" id="feelsLike"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Humidity</span>
+                    <span class="detail-value" id="humidity"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Wind Speed</span>
+                    <span class="detail-value" id="windSpeed"></span>
+                </div>
+            </div>
+        </div>
+
+        <div id="playlistCard" class="playlist-card hidden">
+            <div class="playlist-header">
+                <div class="match-score-container">
+                    <h3>🎵 Recommended Playlist</h3>
+                    <span id="matchScore" class="match-score hidden">Score: 0%</span>
+                </div>
+                <p class="mood-text">Perfect for <span id="moodType"></span> weather</p>
+                <p class="language-text" id="selectedLanguageText" style="font-size: 0.9rem; color: #999; margin-top: 5px;"></p>
+            </div>
+            
+            <div class="playlist-content">
+                <div class="playlist-info">
+                    <div class="playlist-suggestion">
+                        <p class="suggestion-text" id="playlistSuggestion"></p>
+                        <div class="genre-tags" id="genreTags"></div>
+                    </div>
+                </div>
+                
+                <div id="aiPlaylistSection" class="ai-playlist-section hidden">
+                    <h4>🎶 AI-Curated Songs:</h4>
+                    <ul id="aiSongList" style="list-style-type: none; padding: 0; margin-top: 10px; max-height: 200px; overflow-y: auto;">
+                        </ul>
+                </div>
+                <div class="playlist-actions">
+                    <div class="action-buttons">
+                        <button id="createPlaylistBtn" class="spotify-btn create-btn" disabled>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.84-.179-.84-.66 0-.359.24-.66.54-.779 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.242 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>
+                            </svg>
+                            <span id="createPlaylistText">Create Playlist</span>
+                        </button>
+                        </div>
+                    <div id="createdPlaylist" class="created-playlist hidden">
+                        <div class="playlist-success">
+                            <h4>✅ Playlist Created!</h4>
+                            <p>Your weather playlist has been created in your Spotify account.</p>
+                            <a id="playlistLink" href="#" target="_blank" class="playlist-link">Open Playlist on Spotify →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="error" class="error-message hidden"></div>
+        
+        <div id="serverStatus" class="server-status hidden">
+            <p>⚠️ Backend server is not running. <a href="#" id="serverHelpLink">Need help?</a></p>
+            <div id="serverHelp" class="server-help hidden">
+                <p>To start the backend server:</p>
+                <ol>
+                    <li>Open a terminal in this project folder</li>
+                    <li>Run: <code>npm install</code> (if you haven't already)</li>
+                    <li>Run: <code>npm start</code></li>
+                    <li>The server will start on <code>http://localhost:3000</code></li>
+                    <li>Refresh this page</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
